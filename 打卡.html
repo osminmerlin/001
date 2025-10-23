@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打卡助手</title>
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --background-color: #F5F5F7;
+            --card-color: #FFFFFF;
+            --text-color: #1C1C1E;
+            --secondary-text: #8E8E93;
+            --success-color: #34C759;
+            --warning-color: #FF9500;
+            --border-radius: 14px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .punch-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .punch-btn:active {
+            background-color: #0062cc;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-box {
+            background-color: var(--background-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-time {
+            color: var(--secondary-text);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            padding: 24px;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--secondary-text);
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #D1D1D6;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .save-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .notification.active {
+            opacity: 1;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            margin-right: 12px;
+            color: var(--primary-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--secondary-text);
+        }
+
+        .report-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .report-content {
+            line-height: 1.6;
+        }
+
+        .punch-type {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>打卡助手</h1>
+        <button class="settings-btn" id="settingsBtn">⚙️</button>
+    </header>
+
+    <div class="card">
+        <div class="card-title">
+            今日打卡
+            <span id="punchType" class="punch-type">吸烟</span>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="todayCount">0</div>
+                <div class="stat-label">打卡次数</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="avgInterval">-</div>
+                <div class="stat-label">平均间隔</div>
+            </div>
+        </div>
+        <button class="punch-btn" id="punchBtn">打卡</button>
+    </div>
+
+    <div class="card">
+        <div class="card-title">今日打卡记录</div>
+        <div id="historyList" class="empty-state">暂无打卡记录</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">每日报告</div>
+        <div id="dailyReport" class="empty-state">今日尚未生成报告</div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeSettings">×</button>
+            <h2 style="margin-bottom: 20px;">设置</h2>
+            
+            <div class="form-group">
+                <label for="punchName">打卡名称</label>
+                <input type="text" id="punchName" placeholder="例如：吸烟打卡">
+            </div>
+            
+            <div class="form-group">
+                <label for="reminderInterval">提醒间隔（分钟）</label>
+                <input type="number" id="reminderInterval" min="5" max="240" value="60">
+            </div>
+            
+            <div class="form-group">
+                <label for="notificationTitle">通知标题</label>
+                <input type="text" id="notificationTitle" value="吸烟时间到了">
+            </div>
+            
+            <button class="save-btn" id="saveSettings">保存设置</button>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-icon">⏰</div>
+        <div id="notificationMessage"></div>
+    </div>
+
+    <script>
+        // 应用状态
+        const state = {
+            punches: [],
+            settings: {
+                punchName: "吸烟",
+                reminderInterval: 60, // 分钟
+                notificationTitle: "吸烟时间到了",
+                reminderTimer: null
+            }
+        };
+
+        // DOM元素
+        const elements = {
+            punchBtn: document.getElementById('punchBtn'),
+            settingsBtn: document.getElementById('settingsBtn'),
+            closeSettings: document.getElementById('closeSettings'),
+            saveSettings: document.getElementById('saveSettings'),
+            settingsModal: document.getElementById('settingsModal'),
+            todayCount: document.getElementById('todayCount'),
+            avgInterval: document.getElementById('avgInterval'),
+            historyList: document.getElementById('historyList'),
+            dailyReport: document.getElementById('dailyReport'),
+            punchType: document.getElementById('punchType'),
+            punchName: document.getElementById('punchName'),
+            reminderInterval: document.getElementById('reminderInterval'),
+            notificationTitle: document.getElementById('notificationTitle'),
+            notification: document.getElementById('notification'),
+            notificationMessage: document.getElementById('notificationMessage')
+        };
+
+        // 初始化应用
+        function initApp() {
+            loadData();
+            renderUI();
+            setupEventListeners();
+            setupReminder();
+        }
+
+        // 加载数据
+        function loadData() {
+            const savedPunches = localStorage.getItem('punches');
+            const savedSettings = localStorage.getItem('settings');
+            
+            if (savedPunches) {
+                state.punches = JSON.parse(savedPunches);
+            }
+            
+            if (savedSettings) {
+                state.settings = JSON.parse(savedSettings);
+            }
+        }
+
+        // 保存数据
+        function saveData() {
+            localStorage.setItem('punches', JSON.stringify(state.punches));
+            localStorage.setItem('settings', JSON.stringify(state.settings));
+        }
+
+        // 设置事件监听
+        function setupEventListeners() {
+            elements.punchBtn.addEventListener('click', handlePunch);
+            elements.settingsBtn.addEventListener('click', () => toggleModal(true));
+            elements.closeSettings.addEventListener('click', () => toggleModal(false));
+            elements.saveSettings.addEventListener('click', saveSettings);
+        }
+
+        // 处理打卡
+        function handlePunch() {
+            const now = new Date();
+            state.punches.push({
+                id: Date.now(),
+                timestamp: now.getTime(),
+                date: now.toISOString().split('T')[0],
+                time: now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
+            
+            saveData();
+            renderUI();
+            showNotification(`打卡成功！当前时间: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+        }
+
+        // 渲染UI
+        function renderUI() {
+            // 获取今天的打卡记录
+            const today = new Date().toISOString().split('T')[0];
+            const todayPunches = state.punches.filter(punch => punch.date === today);
+            
+            // 更新打卡次数
+            elements.todayCount.textContent = todayPunches.length;
+            
+            // 更新平均间隔
+            if (todayPunches.length > 1) {
+                let totalInterval = 0;
+                for (let i = 1; i < todayPunches.length; i++) {
+                    const interval = (todayPunches[i].timestamp - todayPunches[i-1].timestamp) / (1000 * 60); // 分钟
+                    totalInterval += interval;
+                }
+                const avgInterval = totalInterval / (todayPunches.length - 1);
+                elements.avgInterval.textContent = `${avgInterval.toFixed(1)}分钟`;
+            } else {
+                elements.avgInterval.textContent = '-';
+            }
+            
+            // 更新打卡记录列表
+            if (todayPunches.length > 0) {
+                elements.historyList.innerHTML = '';
+                todayPunches.forEach(punch => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div>打卡 #${todayPunches.indexOf(punch) + 1}</div>
+                        <div class="history-time">${punch.time}</div>
+                    `;
+                    elements.historyList.appendChild(item);
+                });
+            } else {
+                elements.historyList.innerHTML = '<div class="empty-state">暂无打卡记录</div>';
+            }
+            
+            // 更新打卡类型显示
+            elements.punchType.textContent = state.settings.punchName;
+            
+            // 生成每日报告
+            generateDailyReport(todayPunches);
+        }
+
+        // 生成每日报告
+        function generateDailyReport(punches) {
+            if (punches.length === 0) {
+                elements.dailyReport.innerHTML = '<div class="empty-state">今日尚未生成报告</div>';
+                return;
+            }
+            
+            let reportHTML = `
+                <div class="report-section">
+                    <div class="report-title">今日打卡总结</div>
+                    <div class="report-content">
+                        <p>您今天共进行了 <strong>${punches.length}</strong> 次${state.settings.punchName}。</p>
+            `;
+            
+            if (punches.length > 1) {
+                // 计算平均间隔
+                let totalInterval = 0;
+                for (let i = 1; i < punches.length; i++) {
+                    const interval = (punches[i].timestamp - punches[i-1].timestamp) / (1000 * 60); // 分钟
+                    totalInterval += interval;
+                }
+                const avgInterval = totalInterval / (punches.length - 1);
+                
+                reportHTML += `
+                    <p>平均打卡间隔为 <strong>${avgInterval.toFixed(1)}分钟</strong>。</p>
+                `;
+            }
+            
+            // 添加建议
+            reportHTML += `
+                    <p style="margin-top: 10px;">建议：${getSuggestion(punches.length)}</p>
+                </div>
+            `;
+            
+            elements.dailyReport.innerHTML = reportHTML;
+        }
+
+        // 获取建议
+        function getSuggestion(count) {
+            if (state.settings.punchName === "吸烟") {
+                if (count > 10) return "您今天的吸烟次数较多，建议逐步减少吸烟量，保护健康。";
+                if (count > 5) return "您的吸烟次数适中，可以考虑进一步减少吸烟频率。";
+                return "您的吸烟次数控制得很好，继续保持！";
+            }
+            
+            if (state.settings.punchName === "工作") {
+                if (count > 8) return "您今天工作打卡次数较多，注意劳逸结合，避免过度劳累。";
+                if (count > 4) return "您的工作打卡次数合理，保持良好工作节奏。";
+                return "您今天工作打卡次数较少，请确保完成必要的工作任务。";
+            }
+            
+            return "请根据您的打卡目标调整打卡频率。";
+        }
+
+        // 切换设置模态框
+        function toggleModal(show) {
+            if (show) {
+                // 填充当前设置
+                elements.punchName.value = state.settings.punchName;
+                elements.reminderInterval.value = state.settings.reminderInterval;
+                elements.notificationTitle.value = state.settings.notificationTitle;
+                
+                elements.settingsModal.classList.add('active');
+            } else {
+                elements.settingsModal.classList.remove('active');
+            }
+        }
+
+        // 保存设置
+        function saveSettings() {
+            state.settings.punchName = elements.punchName.value || "打卡";
+            state.settings.reminderInterval = parseInt(elements.reminderInterval.value) || 60;
+            state.settings.notificationTitle = elements.notificationTitle.value || "打卡时间到了";
+            
+            saveData();
+            renderUI();
+            setupReminder();
+            toggleModal(false);
+            showNotification("设置已保存");
+        }
+
+        // 设置提醒
+        function setupReminder() {
+            // 清除现有定时器
+            if (state.settings.reminderTimer) {
+                clearInterval(state.settings.reminderTimer);
+            }
+            
+            // 设置新定时器
+            const intervalMs = state.settings.reminderInterval * 60 * 1000;
+            state.settings.reminderTimer = setInterval(() => {
+                showNotification(state.settings.notificationTitle, "该打卡了！");
+            }, intervalMs);
+        }
+
+        // 显示通知
+        function showNotification(title, message = "") {
+            elements.notificationMessage.innerHTML = `<strong>${title}</strong><br>${message}`;
+            elements.notification.classList.add('active');
+            
+            setTimeout(() => {
+                elements.notification.classList.remove('active');
+            }, 3000);
+            
+            // 请求通知权限并发送系统通知
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    new Notification(title, { body: message });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification(title, { body: message });
+                        }
+                    });
+                }
+            }
+        }
+
+        // 初始化应用
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
+
