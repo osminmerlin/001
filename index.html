@@ -3,69 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>快去吸烟</title>
-    <!-- 图标引用 -->
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="apple-touch-icon" type="image/png" sizes="512x512" href="icon-512.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>戒烟助手</title>
     <style>
         :root {
-            --primary-color: #007AFF;
+            --primary-color: #34C759;
+            --primary-light: #5AC8FA;
             --background-color: #F5F5F7;
             --card-color: #FFFFFF;
             --text-color: #1C1C1E;
             --secondary-text: #8E8E93;
             --success-color: #34C759;
             --warning-color: #FF9500;
+            --danger-color: #FF3B30;
             --border-radius: 14px;
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --gradient: linear-gradient(135deg, #34C759 0%, #5AC8FA 100%);
         }
-        /* ...原样保留其余样式... */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--card-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-buttons button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+
+        .header-buttons button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .punch-type {
+            background: var(--gradient);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background: rgba(52, 199, 89, 0.05);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
+
+        .punch-btn {
+            width: 100%;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: var(--border-radius);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
+        }
+
+        .punch-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
+        }
+
+        .punch-btn:active {
+            transform: scale(0.98);
+        }
+
         .avg-after-punch {
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
             color: var(--secondary-text);
+            font-size: 14px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: var(--border-radius);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-time {
+            color: var(--secondary-text);
             font-size: 15px;
+        }
+
+        .recent-info {
+            text-align: center;
+            color: var(--secondary-text);
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: var(--border-radius);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--secondary-text);
+            padding: 30px 0;
+            font-size: 15px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-color);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--secondary-text);
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .save-btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 199, 89, 0.3);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-color);
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            transform: translateX(150%);
+            transition: transform 0.3s ease-out;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.active {
+            transform: translateX(0);
+        }
+
+        .report-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .report-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 15px;
+            color: var(--secondary-text);
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        .report-tab.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .report-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .report-content-panel {
+            display: none;
+        }
+
+        .report-content-panel.active {
+            display: block;
+        }
+
+        .chart-container {
+            height: 250px;
+            margin-bottom: 20px;
+        }
+
+        .hourly-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .hourly-table th, .hourly-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .hourly-table th {
+            color: var(--secondary-text);
+            font-weight: 500;
+        }
+
+        .daily-report-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .daily-report-item:last-child {
+            border-bottom: none;
+        }
+
+        .daily-report-label {
+            font-weight: 500;
+        }
+
+        .daily-report-value {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .encouragement {
+            background: rgba(52, 199, 89, 0.1);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .encouragement h4 {
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+
+        .analysis-report {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 122, 255, 0.05);
+            border-radius: var(--border-radius);
+        }
+
+        .analysis-report h4 {
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 4px;
+            transition: width 0.5s ease;
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>快去吸烟</h1>
+        <h1 id="appTitle">戒烟助手</h1>
         <div class="header-buttons">
             <button class="reports-btn" id="reportsBtn">📊</button>
             <button class="settings-btn" id="settingsBtn">⚙️</button>
         </div>
     </header>
 
-    <div class="card">
-        <div class="card-title">
-            今日打卡
-            <span id="punchType" class="punch-type">吸烟</span>
-        </div>
-        <div class="stats-grid">
-            <div class="stat-box">
-                <div class="stat-value" id="todayCount">0</div>
-                <div class="stat-label">打卡次数</div>
+    <div class="container">
+        <div class="card">
+            <div class="card-title">
+                <span id="todayCardTitle">今日打卡</span>
+                <span id="punchType" class="punch-type">吸烟</span>
             </div>
-            <div class="stat-box">
-                <div class="stat-value" id="avgInterval">-</div>
-                <div class="stat-label">平均间隔</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="todayCount">0</div>
+                    <div class="stat-label">打卡次数</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="avgInterval">-</div>
+                    <div class="stat-label">平均间隔</div>
+                </div>
+            </div>
+            <button class="punch-btn" id="punchBtn">打卡记录吸烟</button>
+            <div id="avgAfterPunch" class="avg-after-punch"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">最近打卡记录</div>
+            <div id="historyList" class="empty-state">暂无打卡记录</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">每日报告</div>
+            <div id="dailyReport" class="empty-state">今日尚未生成报告</div>
+            <div id="analysisReport" class="analysis-report" style="display: none;">
+                <h4>数据分析</h4>
+                <div id="analysisContent"></div>
+            </div>
+            <div id="encouragement" class="encouragement" style="display: none;">
+                <h4>鼓励的话</h4>
+                <div id="encouragementContent"></div>
             </div>
         </div>
-        <button class="punch-btn" id="punchBtn">打卡</button>
-        <div id="avgAfterPunch" class="avg-after-punch"></div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">最近打卡记录</div>
-        <div id="historyList" class="empty-state">暂无打卡记录</div>
-    </div>
-
-    <div class="card">
-        <div class="card-title">每日报告</div>
-        <div id="dailyReport" class="empty-state">今日尚未生成报告</div>
     </div>
 
     <!-- 设置模态框 -->
@@ -74,20 +498,84 @@
             <button class="close-btn" id="closeSettings">×</button>
             <h2 style="margin-bottom: 20px;">设置</h2>
             <div class="form-group">
-                <label for="punchName">打卡名称</label>
-                <input type="text" id="punchName" placeholder="例如：吸烟打卡">
+                <label for="appTitleInput">应用标题</label>
+                <input type="text" id="appTitleInput" placeholder="例如：戒烟助手">
+            </div>
+            <div class="form-group">
+                <label for="todayCardTitleInput">今日打卡标题</label>
+                <input type="text" id="todayCardTitleInput" placeholder="例如：今日打卡">
+            </div>
+            <div class="form-group">
+                <label for="punchName">打卡行为名称</label>
+                <input type="text" id="punchName" placeholder="例如：吸烟">
             </div>
             <button class="save-btn" id="saveSettings">保存设置</button>
         </div>
     </div>
 
-    <!-- ...原样保留报告模态框和通知部分... -->
+    <!-- 报告模态框 -->
+    <div class="modal" id="reportsModal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeReports">×</button>
+            <h2 style="margin-bottom: 20px;">统计报告</h2>
+            <div class="report-tabs">
+                <button class="report-tab active" data-tab="daily">日报告</button>
+                <button class="report-tab" data-tab="monthly">月报告</button>
+                <button class="report-tab" data-tab="yearly">年报告</button>
+            </div>
+            
+            <div id="dailyReportContent" class="report-content-panel active">
+                <div class="form-group">
+                    <label for="dailyDatePicker">选择日期</label>
+                    <input type="date" id="dailyDatePicker">
+                </div>
+                <div class="chart-container">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 15px;">时段分布</h3>
+                    <table class="hourly-table">
+                        <thead>
+                            <tr>
+                                <th>时段</th>
+                                <th>打卡次数</th>
+                                <th>占比</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hourlyTableBody">
+                            <!-- 时段数据将在这里动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="monthlyReportContent" class="report-content-panel">
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            
+            <div id="yearlyReportContent" class="report-content-panel">
+                <div class="chart-container">
+                    <canvas id="yearlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- 通知 -->
+    <div class="notification" id="notification">
+        <div id="notificationMessage"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // 应用状态
         const state = {
             punches: [],
             settings: {
+                appTitle: "戒烟助手",
+                todayCardTitle: "今日打卡",
                 punchName: "吸烟",
             },
             charts: {
@@ -106,7 +594,15 @@
             return `${year}-${month}-${day}`;
         }
 
-        // ...省略getLocalMonthString与getLocalYearString...
+        function getLocalMonthString(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
+        }
+
+        function getLocalYearString(date = new Date()) {
+            return date.getFullYear().toString();
+        }
 
         function initApp() {
             elements = {
@@ -124,11 +620,19 @@
                 historyList: document.getElementById('historyList'),
                 dailyReport: document.getElementById('dailyReport'),
                 punchType: document.getElementById('punchType'),
+                appTitle: document.getElementById('appTitle'),
+                todayCardTitle: document.getElementById('todayCardTitle'),
+                appTitleInput: document.getElementById('appTitleInput'),
+                todayCardTitleInput: document.getElementById('todayCardTitleInput'),
                 punchName: document.getElementById('punchName'),
                 notification: document.getElementById('notification'),
                 notificationMessage: document.getElementById('notificationMessage'),
                 dailyDatePicker: document.getElementById('dailyDatePicker'),
-                hourlyTableBody: document.getElementById('hourlyTableBody')
+                hourlyTableBody: document.getElementById('hourlyTableBody'),
+                analysisReport: document.getElementById('analysisReport'),
+                analysisContent: document.getElementById('analysisContent'),
+                encouragement: document.getElementById('encouragement'),
+                encouragementContent: document.getElementById('encouragementContent')
             };
 
             loadData();
@@ -144,23 +648,33 @@
             if (savedPunches) state.punches = JSON.parse(savedPunches);
             if (savedSettings) state.settings = JSON.parse(savedSettings);
         }
+        
         function saveData() {
             localStorage.setItem('punches', JSON.stringify(state.punches));
             localStorage.setItem('settings', JSON.stringify(state.settings));
         }
+        
         function setupEventListeners() {
             if (elements.punchBtn) elements.punchBtn.addEventListener('click', handlePunch);
-            if (elements.settingsBtn) elements.settingsBtn.addEventListener('click', () => toggleModal(elements.settingsModal, true));
+            if (elements.settingsBtn) elements.settingsBtn.addEventListener('click', () => {
+                // 加载当前设置到表单
+                if (elements.appTitleInput) elements.appTitleInput.value = state.settings.appTitle;
+                if (elements.todayCardTitleInput) elements.todayCardTitleInput.value = state.settings.todayCardTitle;
+                if (elements.punchName) elements.punchName.value = state.settings.punchName;
+                toggleModal(elements.settingsModal, true);
+            });
             if (elements.reportsBtn) elements.reportsBtn.addEventListener('click', () => { toggleModal(elements.reportsModal, true); generateReports(); });
             if (elements.closeSettings) elements.closeSettings.addEventListener('click', () => toggleModal(elements.settingsModal, false));
             if (elements.closeReports) elements.closeReports.addEventListener('click', () => toggleModal(elements.reportsModal, false));
             if (elements.saveSettings) elements.saveSettings.addEventListener('click', saveSettings);
+            
             document.querySelectorAll('.report-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     const tabName = tab.getAttribute('data-tab');
                     switchReportTab(tabName);
                 });
             });
+            
             if (elements.dailyDatePicker) {
                 elements.dailyDatePicker.addEventListener('change', function() {
                     generateDailyChart(this.value);
@@ -168,6 +682,7 @@
                 });
             }
         }
+        
         function switchReportTab(tabName) {
             document.querySelectorAll('.report-tab').forEach(tab => {
                 tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
@@ -176,6 +691,7 @@
                 content.classList.toggle('active', content.id === `${tabName}ReportContent`);
             });
         }
+        
         function handlePunch() {
             const now = new Date();
             const localDate = getLocalDateString(now);
@@ -187,11 +703,18 @@
             });
             saveData();
             renderUI();
-            showNotification(`打卡成功！当前时间: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+            showNotification(`打卡成功！`, `当前时间: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
         }
+        
         function renderUI() {
             const today = getLocalDateString();
             const todayPunches = state.punches.filter(punch => punch.date === today);
+
+            // 更新标题
+            if (elements.appTitle) elements.appTitle.textContent = state.settings.appTitle;
+            if (elements.todayCardTitle) elements.todayCardTitle.textContent = state.settings.todayCardTitle;
+            if (elements.punchType) elements.punchType.textContent = state.settings.punchName;
+            if (elements.punchBtn) elements.punchBtn.textContent = `打卡记录${state.settings.punchName}`;
 
             // 打卡次数
             if (elements.todayCount) elements.todayCount.textContent = todayPunches.length;
@@ -253,25 +776,371 @@
                 }
             }
 
-            // 打卡类型
-            if (elements.punchType) elements.punchType.textContent = state.settings.punchName;
             generateDailyReport(todayPunches);
+            generateAnalysisReport(todayPunches);
+            generateEncouragement(todayPunches);
         }
 
-        // ...原样保留generateDailyReport、generateReports等...
+        function generateDailyReport(todayPunches) {
+            if (!elements.dailyReport) return;
+            
+            if (todayPunches.length === 0) {
+                elements.dailyReport.innerHTML = '<div class="empty-state">今日尚未生成报告</div>';
+                return;
+            }
+            
+            let reportHTML = '';
+            
+            // 总次数
+            reportHTML += `<div class="daily-report-item">
+                <div class="daily-report-label">今日打卡次数</div>
+                <div class="daily-report-value">${todayPunches.length}次</div>
+            </div>`;
+            
+            // 最早打卡时间
+            if (todayPunches.length > 0) {
+                const earliest = todayPunches.reduce((earliest, current) => 
+                    earliest.timestamp < current.timestamp ? earliest : current
+                );
+                reportHTML += `<div class="daily-report-item">
+                    <div class="daily-report-label">最早打卡时间</div>
+                    <div class="daily-report-value">${earliest.time}</div>
+                </div>`;
+            }
+            
+            // 最晚打卡时间
+            if (todayPunches.length > 0) {
+                const latest = todayPunches.reduce((latest, current) => 
+                    latest.timestamp > current.timestamp ? latest : current
+                );
+                reportHTML += `<div class="daily-report-item">
+                    <div class="daily-report-label">最晚打卡时间</div>
+                    <div class="daily-report-value">${latest.time}</div>
+                </div>`;
+            }
+            
+            // 平均间隔
+            if (todayPunches.length > 1) {
+                let totalInterval = 0;
+                for (let i = 1; i < todayPunches.length; i++) {
+                    const interval = (todayPunches[i].timestamp - todayPunches[i - 1].timestamp) / (1000 * 60);
+                    totalInterval += interval;
+                }
+                const avgInterval = (totalInterval / (todayPunches.length - 1)).toFixed(1);
+                reportHTML += `<div class="daily-report-item">
+                    <div class="daily-report-label">平均间隔</div>
+                    <div class="daily-report-value">${avgInterval}分钟</div>
+                </div>`;
+            }
+            
+            elements.dailyReport.innerHTML = reportHTML;
+        }
 
-        // 建议函数、切换模态框等...
+        function generateAnalysisReport(todayPunches) {
+            if (!elements.analysisContent || !elements.analysisReport) return;
+            
+            if (todayPunches.length === 0) {
+                elements.analysisReport.style.display = 'none';
+                return;
+            }
+            
+            elements.analysisReport.style.display = 'block';
+            
+            // 获取昨天的数据
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = getLocalDateString(yesterday);
+            const yesterdayPunches = state.punches.filter(punch => punch.date === yesterdayStr);
+            
+            // 获取上周同一天的数据
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            const lastWeekStr = getLocalDateString(lastWeek);
+            const lastWeekPunches = state.punches.filter(punch => punch.date === lastWeekStr);
+            
+            let analysisHTML = '';
+            
+            // 与昨日对比
+            if (yesterdayPunches.length > 0) {
+                const change = todayPunches.length - yesterdayPunches.length;
+                const changeText = change > 0 ? `增加${change}次` : (change < 0 ? `减少${Math.abs(change)}次` : '持平');
+                analysisHTML += `<p>与昨日相比: ${changeText}</p>`;
+            } else {
+                analysisHTML += `<p>与昨日相比: 无昨日数据</p>`;
+            }
+            
+            // 与上周对比
+            if (lastWeekPunches.length > 0) {
+                const change = todayPunches.length - lastWeekPunches.length;
+                const changeText = change > 0 ? `增加${change}次` : (change < 0 ? `减少${Math.abs(change)}次` : '持平');
+                analysisHTML += `<p>与上周相比: ${changeText}</p>`;
+            } else {
+                analysisHTML += `<p>与上周相比: 无上周数据</p>`;
+            }
+            
+            // 趋势分析
+            if (todayPunches.length > 0) {
+                // 计算平均间隔
+                let totalInterval = 0;
+                if (todayPunches.length > 1) {
+                    for (let i = 1; i < todayPunches.length; i++) {
+                        const interval = (todayPunches[i].timestamp - todayPunches[i - 1].timestamp) / (1000 * 60);
+                        totalInterval += interval;
+                    }
+                    const avgInterval = totalInterval / (todayPunches.length - 1);
+                    
+                    if (avgInterval > 120) {
+                        analysisHTML += `<p>趋势分析: 间隔时间较长，控制得很好！</p>`;
+                    } else if (avgInterval > 60) {
+                        analysisHTML += `<p>趋势分析: 间隔时间适中，继续努力！</p>`;
+                    } else {
+                        analysisHTML += `<p>趋势分析: 间隔时间较短，尝试延长间隔</p>`;
+                    }
+                }
+            }
+            
+            elements.analysisContent.innerHTML = analysisHTML;
+        }
+
+        function generateEncouragement(todayPunches) {
+            if (!elements.encouragementContent || !elements.encouragement) return;
+            
+            if (todayPunches.length === 0) {
+                elements.encouragement.style.display = 'none';
+                return;
+            }
+            
+            elements.encouragement.style.display = 'block';
+            
+            let encouragementHTML = '';
+            
+            if (todayPunches.length <= 3) {
+                encouragementHTML = `<p>今天控制得很好！继续保持，每一次减少都是迈向健康的重要一步！</p>`;
+            } else if (todayPunches.length <= 6) {
+                encouragementHTML = `<p>不错！已经意识到需要控制，明天争取进一步减少次数。</p>`;
+            } else if (todayPunches.length <= 10) {
+                encouragementHTML = `<p>戒烟是个过程，不要气馁。明天设定一个小目标，减少1-2次。</p>`;
+            } else {
+                encouragementHTML = `<p>今天可能有些挑战，但重要的是您正在记录和面对。明天会更好！</p>`;
+            }
+            
+            // 添加进度条
+            const progress = Math.max(0, Math.min(100, 100 - (todayPunches.length * 5)));
+            encouragementHTML += `
+                <div style="margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>戒烟进度</span>
+                        <span>${progress}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+            `;
+            
+            elements.encouragementContent.innerHTML = encouragementHTML;
+        }
+
+        function generateReports() {
+            // 生成日报告图表
+            if (elements.dailyDatePicker) {
+                generateDailyChart(elements.dailyDatePicker.value);
+                generateHourlyTable(elements.dailyDatePicker.value);
+            }
+            
+            // 生成月报告图表
+            generateMonthlyChart();
+            
+            // 生成年报告图表
+            generateYearlyChart();
+        }
+
+        function generateDailyChart(date) {
+            const dailyPunches = state.punches.filter(punch => punch.date === date);
+            const ctx = document.getElementById('dailyChart');
+            
+            if (state.charts.daily) {
+                state.charts.daily.destroy();
+            }
+            
+            if (dailyPunches.length === 0) {
+                ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+                return;
+            }
+            
+            // 按小时分组统计
+            const hourlyCounts = Array(24).fill(0);
+            dailyPunches.forEach(punch => {
+                const hour = new Date(punch.timestamp).getHours();
+                hourlyCounts[hour]++;
+            });
+            
+            state.charts.daily = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: '打卡次数',
+                        data: hourlyCounts,
+                        backgroundColor: 'rgba(52, 199, 89, 0.5)',
+                        borderColor: 'rgba(52, 199, 89, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateHourlyTable(date) {
+            const dailyPunches = state.punches.filter(punch => punch.date === date);
+            const hourlyCounts = Array(24).fill(0);
+            dailyPunches.forEach(punch => {
+                const hour = new Date(punch.timestamp).getHours();
+                hourlyCounts[hour]++;
+            });
+            
+            let tableHTML = '';
+            const total = dailyPunches.length;
+            
+            for (let i = 0; i < 24; i++) {
+                const count = hourlyCounts[i];
+                if (count > 0) {
+                    const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                    tableHTML += `<tr>
+                        <td>${i}:00 - ${i}:59</td>
+                        <td>${count}次</td>
+                        <td>${percentage}%</td>
+                    </tr>`;
+                }
+            }
+            
+            if (tableHTML === '') {
+                tableHTML = '<tr><td colspan="3" style="text-align: center;">暂无数据</td></tr>';
+            }
+            
+            if (elements.hourlyTableBody) {
+                elements.hourlyTableBody.innerHTML = tableHTML;
+            }
+        }
+
+        function generateMonthlyChart() {
+            const ctx = document.getElementById('monthlyChart');
+            
+            if (state.charts.monthly) {
+                state.charts.monthly.destroy();
+            }
+            
+            // 获取最近6个月的数据
+            const months = [];
+            const monthCounts = [];
+            const currentDate = new Date();
+            
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+                const monthStr = getLocalMonthString(date);
+                months.push(monthStr);
+                
+                const count = state.punches.filter(punch => {
+                    const punchDate = new Date(punch.timestamp);
+                    return punchDate.getFullYear() === date.getFullYear() && 
+                           punchDate.getMonth() === date.getMonth();
+                }).length;
+                
+                monthCounts.push(count);
+            }
+            
+            state.charts.monthly = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '打卡次数',
+                        data: monthCounts,
+                        backgroundColor: 'rgba(52, 199, 89, 0.1)',
+                        borderColor: 'rgba(52, 199, 89, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function generateYearlyChart() {
+            const ctx = document.getElementById('yearlyChart');
+            
+            if (state.charts.yearly) {
+                state.charts.yearly.destroy();
+            }
+            
+            // 获取最近5年的数据
+            const years = [];
+            const yearCounts = [];
+            const currentYear = new Date().getFullYear();
+            
+            for (let i = 4; i >= 0; i--) {
+                const year = currentYear - i;
+                years.push(year.toString());
+                
+                const count = state.punches.filter(punch => {
+                    const punchYear = new Date(punch.timestamp).getFullYear();
+                    return punchYear === year;
+                }).length;
+                
+                yearCounts.push(count);
+            }
+            
+            state.charts.yearly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: years,
+                    datasets: [{
+                        label: '打卡次数',
+                        data: yearCounts,
+                        backgroundColor: 'rgba(52, 199, 89, 0.5)',
+                        borderColor: 'rgba(52, 199, 89, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function toggleModal(modal, show) {
+            if (show) {
+                modal.classList.add('active');
+            } else {
+                modal.classList.remove('active');
+            }
+        }
 
         function saveSettings() {
-            if (elements.punchName) state.settings.punchName = elements.punchName.value || "打卡";
+            if (elements.appTitleInput) state.settings.appTitle = elements.appTitleInput.value || "戒烟助手";
+            if (elements.todayCardTitleInput) state.settings.todayCardTitle = elements.todayCardTitleInput.value || "今日打卡";
+            if (elements.punchName) state.settings.punchName = elements.punchName.value || "吸烟";
             saveData();
             renderUI();
             toggleModal(elements.settingsModal, false);
             showNotification("设置已保存");
         }
-
-        // 去掉提醒相关函数
-        // function setupReminder() { /* 已移除 */ }
 
         function showNotification(title, message = "") {
             if (!elements.notificationMessage || !elements.notification) return;
