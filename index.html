@@ -1,17 +1,16 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html><html lang="zh-CN"><head>
+<base href="https://uhme5qobweuqo.ok.kimi.link">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>戒烟助手</title>
-    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-    <link rel="apple-touch-icon" type="image/png" sizes="192x192" href="icon-192.png">
-    <link rel="apple-touch-icon" type="image/png" sizes="512x512" href="icon-512.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="戒烟助手">
-    <meta name="theme-color" content="#34C759">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png"/>
+    <link rel="apple-touch-icon" type="image/png" sizes="192x192" href="icon-192.png"/>
+    <link rel="apple-touch-icon" type="image/png" sizes="512x512" href="icon-512.png"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+    <meta name="apple-mobile-web-app-title" content="戒烟助手"/>
+    <meta name="theme-color" content="#34C759"/>
     <style>
         :root {
             --primary-color: #34C759;
@@ -170,6 +169,30 @@
         }
 
         .punch-btn:active {
+            transform: scale(0.98);
+        }
+
+        .clear-btn {
+            width: 100%;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+            margin-top: 10px;
+        }
+
+        .clear-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+        }
+
+        .clear-btn:active {
             transform: scale(0.98);
         }
 
@@ -451,7 +474,7 @@
             transition: width 0.5s ease;
         }
     </style>
-</head>
+<script src="https://statics.moonshot.cn/sdk/preview-widgets.min.js" defer=""></script></head>
 <body>
     <header>
         <h1 id="appTitle">戒烟助手</h1>
@@ -478,6 +501,7 @@
                 </div>
             </div>
             <button class="punch-btn" id="punchBtn">打卡记录吸烟</button>
+            <button class="clear-btn" id="clearBtn">今日数据清零</button>
             <div id="avgAfterPunch" class="avg-after-punch"></div>
         </div>
 
@@ -507,15 +531,15 @@
             <h2 style="margin-bottom: 20px;">设置</h2>
             <div class="form-group">
                 <label for="appTitleInput">应用标题</label>
-                <input type="text" id="appTitleInput" placeholder="例如：戒烟助手">
+                <input type="text" id="appTitleInput" placeholder="例如：戒烟助手"/>
             </div>
             <div class="form-group">
                 <label for="todayCardTitleInput">今日打卡标题</label>
-                <input type="text" id="todayCardTitleInput" placeholder="例如：今日打卡">
+                <input type="text" id="todayCardTitleInput" placeholder="例如：今日打卡"/>
             </div>
             <div class="form-group">
                 <label for="punchName">打卡行为名称</label>
-                <input type="text" id="punchName" placeholder="例如：吸烟">
+                <input type="text" id="punchName" placeholder="例如：吸烟"/>
             </div>
             <button class="save-btn" id="saveSettings">保存设置</button>
         </div>
@@ -535,7 +559,7 @@
             <div id="dailyReportContent" class="report-content-panel active">
                 <div class="form-group">
                     <label for="dailyDatePicker">选择日期</label>
-                    <input type="date" id="dailyDatePicker">
+                    <input type="date" id="dailyDatePicker"/>
                 </div>
                 <div class="chart-container">
                     <canvas id="dailyChart"></canvas>
@@ -634,6 +658,7 @@
         function initApp() {
             elements = {
                 punchBtn: document.getElementById('punchBtn'),
+                clearBtn: document.getElementById('clearBtn'),
                 settingsBtn: document.getElementById('settingsBtn'),
                 reportsBtn: document.getElementById('reportsBtn'),
                 closeSettings: document.getElementById('closeSettings'),
@@ -710,6 +735,7 @@
         
         function setupEventListeners() {
             if (elements.punchBtn) elements.punchBtn.addEventListener('click', handlePunch);
+            if (elements.clearBtn) elements.clearBtn.addEventListener('click', handleClearTodayData);
             if (elements.settingsBtn) elements.settingsBtn.addEventListener('click', () => {
                 if (elements.appTitleInput) elements.appTitleInput.value = state.settings.appTitle;
                 if (elements.todayCardTitleInput) elements.todayCardTitleInput.value = state.settings.todayCardTitle;
@@ -757,6 +783,24 @@
             saveData();
             renderUI();
             showNotification(`打卡成功！`, `当前时间: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+        }
+
+        function handleClearTodayData() {
+            const today = getLocalDateString();
+            const todayPunchesCount = state.punches.filter(punch => punch.date === today).length;
+            
+            if (todayPunchesCount === 0) {
+                showNotification("今日无数据", "今天还没有任何打卡记录");
+                return;
+            }
+            
+            if (confirm(`确定要清空今日所有打卡记录吗？\n今日共有 ${todayPunchesCount} 条记录将被删除。`)) {
+                // 过滤掉今天的打卡记录
+                state.punches = state.punches.filter(punch => punch.date !== today);
+                saveData();
+                renderUI();
+                showNotification("数据已清空", "今日所有打卡记录已删除");
+            }
         }
         
         function renderUI() {
@@ -1220,5 +1264,5 @@
 
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
-</body>
-</html>
+
+</body></html>
