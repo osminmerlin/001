@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打卡助手</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --background-color: #F5F5F7;
+            --card-color: #FFFFFF;
+            --text-color: #1C1C1E;
+            --secondary-text: #8E8E93;
+            --success-color: #34C759;
+            --warning-color: #FF9500;
+            --border-radius: 14px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding: 16px;
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .settings-btn, .reports-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--primary-color);
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .header-buttons {
+            display: flex;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .punch-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 20px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .punch-btn:active {
+            background-color: #0062cc;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .stat-box {
+            background-color: var(--background-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-time {
+            color: var(--secondary-text);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--secondary-text);
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #D1D1D6;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .save-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .notification.active {
+            opacity: 1;
+        }
+
+        .notification-icon {
+            font-size: 24px;
+            margin-right: 12px;
+            color: var(--primary-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--secondary-text);
+        }
+
+        .report-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .report-content {
+            line-height: 1.6;
+        }
+
+        .punch-type {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .reports-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        .report-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--secondary-text);
+        }
+
+        .report-tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .report-content-panel {
+            display: none;
+        }
+
+        .report-content-panel.active {
+            display: block;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin: 20px 0;
+        }
+
+        .report-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .report-stat {
+            background-color: var(--background-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .report-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .report-stat-label {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+
+        .hourly-details {
+            margin-top: 20px;
+        }
+
+        .hourly-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .hourly-table th,
+        .hourly-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        .hourly-table th {
+            background-color: var(--background-color);
+            font-weight: 600;
+        }
+
+        .hourly-table tr:hover {
+            background-color: var(--background-color);
+        }
+
+        .date-selector {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .date-selector label {
+            display: inline-block;
+            margin: 0;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .date-selector input {
+            display: inline-block;
+            width: auto;
+            padding: 8px 12px;
+        }
+
+        .recent-info {
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>打卡助手</h1>
+        <div class="header-buttons">
+            <button class="reports-btn" id="reportsBtn">📊</button>
+            <button class="settings-btn" id="settingsBtn">⚙️</button>
+        </div>
+    </header>
+
+    <div class="card">
+        <div class="card-title">
+            今日打卡
+            <span id="punchType" class="punch-type">吸烟</span>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="todayCount">0</div>
+                <div class="stat-label">打卡次数</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="avgInterval">-</div>
+                <div class="stat-label">平均间隔</div>
+            </div>
+        </div>
+        <button class="punch-btn" id="punchBtn">打卡</button>
+    </div>
+
+    <div class="card">
+        <div class="card-title">最近打卡记录</div>
+        <div id="historyList" class="empty-state">暂无打卡记录</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">每日报告</div>
+        <div id="dailyReport" class="empty-state">今日尚未生成报告</div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeSettings">×</button>
+            <h2 style="margin-bottom: 20px;">设置</h2>
+            
+            <div class="form-group">
+                <label for="punchName">打卡名称</label>
+                <input type="text" id="punchName" placeholder="例如：吸烟打卡">
+            </div>
+            
+            <div class="form-group">
+                <label for="reminderInterval">提醒间隔（分钟）</label>
+                <input type="number" id="reminderInterval" min="5" max="240" value="60">
+            </div>
+            
+            <div class="form-group">
+                <label for="notificationTitle">通知标题</label>
+                <input type="text" id="notificationTitle" value="吸烟时间到了">
+            </div>
+            
+            <button class="save-btn" id="saveSettings">保存设置</button>
+        </div>
+    </div>
+
+    <!-- 报告模态框 -->
+    <div class="modal" id="reportsModal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeReports">×</button>
+            <h2 style="margin-bottom: 20px;">打卡报告</h2>
+            
+            <div class="reports-tabs">
+                <button class="report-tab active" data-tab="daily">每日</button>
+                <button class="report-tab" data-tab="monthly">每月</button>
+                <button class="report-tab" data-tab="yearly">每年</button>
+            </div>
+            
+            <div id="dailyReportContent" class="report-content-panel active">
+                <h3>每日打卡趋势</h3>
+                <div class="date-selector">
+                    <label for="dailyDatePicker">选择日期：</label>
+                    <input type="date" id="dailyDatePicker">
+                </div>
+                <div class="chart-container">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+                <div class="report-stats" id="dailyStats"></div>
+                <div class="hourly-details">
+                    <h4>每小时打卡详情</h4>
+                    <table class="hourly-table" id="hourlyTable">
+                        <thead>
+                            <tr>
+                                <th>时间段</th>
+                                <th>打卡次数</th>
+                                <th>具体时间</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hourlyTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="monthlyReportContent" class="report-content-panel">
+                <h3>本月打卡趋势</h3>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+                <div class="report-stats" id="monthlyStats"></div>
+            </div>
+            
+            <div id="yearlyReportContent" class="report-content-panel">
+                <h3>今年打卡趋势</h3>
+                <div class="chart-container">
+                    <canvas id="yearlyChart"></canvas>
+                </div>
+                <div class="report-stats" id="yearlyStats"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-icon">⏰</div>
+        <div id="notificationMessage"></div>
+    </div>
+
+    <script>
+        // 应用状态
+        const state = {
+            punches: [],
+            settings: {
+                punchName: "吸烟",
+                reminderInterval: 60,
+                notificationTitle: "吸烟时间到了",
+                reminderTimer: null
+            },
+            charts: {
+                daily: null,
+                monthly: null,
+                yearly: null
+            }
+        };
+
+        // DOM元素引用（在DOM加载后初始化）
+        let elements;
+
+        // 辅助函数：获取本地日期字符串
+        function getLocalDateString(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 获取本地月份字符串
+        function getLocalMonthString(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
+        }
+
+        // 获取本地年份字符串
+        function getLocalYearString(date = new Date()) {
+            return date.getFullYear().toString();
+        }
+
+        // 初始化应用
+        function initApp() {
+            // 初始化DOM元素引用（确保DOM已加载）
+            elements = {
+                punchBtn: document.getElementById('punchBtn'),
+                settingsBtn: document.getElementById('settingsBtn'),
+                reportsBtn: document.getElementById('reportsBtn'),
+                closeSettings: document.getElementById('closeSettings'),
+                closeReports: document.getElementById('closeReports'),
+                saveSettings: document.getElementById('saveSettings'),
+                settingsModal: document.getElementById('settingsModal'),
+                reportsModal: document.getElementById('reportsModal'),
+                todayCount: document.getElementById('todayCount'),
+                avgInterval: document.getElementById('avgInterval'),
+                historyList: document.getElementById('historyList'),
+                dailyReport: document.getElementById('dailyReport'),
+                punchType: document.getElementById('punchType'),
+                punchName: document.getElementById('punchName'),
+                reminderInterval: document.getElementById('reminderInterval'),
+                notificationTitle: document.getElementById('notificationTitle'),
+                notification: document.getElementById('notification'),
+                notificationMessage: document.getElementById('notificationMessage'),
+                dailyDatePicker: document.getElementById('dailyDatePicker'),
+                hourlyTableBody: document.getElementById('hourlyTableBody')
+            };
+
+            loadData();
+            renderUI();
+            setupEventListeners();
+            setupReminder();
+            
+            // 设置日期选择器默认值为今天
+            elements.dailyDatePicker.value = getLocalDateString();
+        }
+
+        // 加载数据
+        function loadData() {
+            const savedPunches = localStorage.getItem('punches');
+            const savedSettings = localStorage.getItem('settings');
+            
+            if (savedPunches) {
+                state.punches = JSON.parse(savedPunches);
+            }
+            
+            if (savedSettings) {
+                state.settings = JSON.parse(savedSettings);
+            }
+        }
+
+        // 保存数据
+        function saveData() {
+            localStorage.setItem('punches', JSON.stringify(state.punches));
+            localStorage.setItem('settings', JSON.stringify(state.settings));
+        }
+
+        // 设置事件监听（修复：确保DOM元素存在后再绑定事件）
+        function setupEventListeners() {
+            // 检查元素是否存在
+            if (elements.punchBtn) {
+                elements.punchBtn.addEventListener('click', handlePunch);
+            }
+            
+            if (elements.settingsBtn) {
+                elements.settingsBtn.addEventListener('click', () => toggleModal(elements.settingsModal, true));
+            }
+            
+            if (elements.reportsBtn) {
+                elements.reportsBtn.addEventListener('click', () => {
+                    toggleModal(elements.reportsModal, true);
+                    generateReports();
+                });
+            }
+            
+            if (elements.closeSettings) {
+                elements.closeSettings.addEventListener('click', () => toggleModal(elements.settingsModal, false));
+            }
+            
+            if (elements.closeReports) {
+                elements.closeReports.addEventListener('click', () => toggleModal(elements.reportsModal, false));
+            }
+            
+            if (elements.saveSettings) {
+                elements.saveSettings.addEventListener('click', saveSettings);
+            }
+            
+            // 报告标签切换
+            document.querySelectorAll('.report-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    switchReportTab(tabName);
+                });
+            });
+            
+            // 日期选择器事件
+            if (elements.dailyDatePicker) {
+                elements.dailyDatePicker.addEventListener('change', function() {
+                    generateDailyChart(this.value);
+                    generateHourlyTable(this.value);
+                });
+            }
+        }
+
+        // 切换报告标签
+        function switchReportTab(tabName) {
+            // 更新活跃标签
+            document.querySelectorAll('.report-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
+            });
+            
+            // 更新活跃内容
+            document.querySelectorAll('.report-content-panel').forEach(content => {
+                content.classList.toggle('active', content.id === `${tabName}ReportContent`);
+            });
+        }
+
+        // 处理打卡
+        function handlePunch() {
+            const now = new Date();
+            const localDate = getLocalDateString(now);
+            
+            state.punches.push({
+                id: Date.now(),
+                timestamp: now.getTime(),
+                date: localDate,
+                time: now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
+            
+            saveData();
+            renderUI();
+            showNotification(`打卡成功！当前时间: ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+        }
+
+        // 渲染UI（修复：打卡序号显示顺序倒过来）
+        function renderUI() {
+            const today = getLocalDateString();
+            const todayPunches = state.punches.filter(punch => punch.date === today);
+            
+            // 更新打卡次数
+            if (elements.todayCount) {
+                elements.todayCount.textContent = todayPunches.length;
+            }
+            
+            // 更新平均间隔
+            if (elements.avgInterval) {
+                if (todayPunches.length > 1) {
+                    let totalInterval = 0;
+                    for (let i = 1; i < todayPunches.length; i++) {
+                        const interval = (todayPunches[i].timestamp - todayPunches[i-1].timestamp) / (1000 * 60);
+                        totalInterval += interval;
+                    }
+                    const avgInterval = totalInterval / (todayPunches.length - 1);
+                    elements.avgInterval.textContent = `${avgInterval.toFixed(1)}分钟`;
+                } else {
+                    elements.avgInterval.textContent = '-';
+                }
+            }
+            
+            // 更新打卡记录列表（修复：打卡序号显示顺序倒过来）
+            if (elements.historyList) {
+                if (todayPunches.length > 0) {
+                    elements.historyList.innerHTML = '';
+                    
+                    // 获取最近5次打卡记录（倒序排列）
+                    const recentPunches = todayPunches.slice().reverse().slice(0, 5);
+                    
+                    recentPunches.forEach((punch, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'history-item';
+                        // 修复：序号从1开始，最新的打卡显示为#1
+                        const sequence = index + 1;
+                        item.innerHTML = `
+                            <div>打卡 #${sequence}</div>
+                            <div class="history-time">${punch.time}</div>
+                        `;
+                        elements.historyList.appendChild(item);
+                    });
+                    
+                    // 显示记录数量信息
+                    if (todayPunches.length > 5) {
+                        const info = document.createElement('div');
+                        info.className = 'recent-info';
+                        info.textContent = `今日共${todayPunches.length}次打卡，显示最近5次`;
+                        elements.historyList.appendChild(info);
+                    }
+                } else {
+                    elements.historyList.innerHTML = '<div class="empty-state">暂无打卡记录</div>';
+                }
+            }
+            
+            // 更新打卡类型显示
+            if (elements.punchType) {
+                elements.punchType.textContent = state.settings.punchName;
+            }
+            
+            // 生成每日报告
+            generateDailyReport(todayPunches);
+        }
+
+        // 生成每日报告（修复：确保内容正确显示）
+        function generateDailyReport(punches) {
+            if (!elements.dailyReport) return;
+            
+            if (punches.length === 0) {
+                elements.dailyReport.innerHTML = '<div class="empty-state">今日尚未生成报告</div>';
+                return;
+            }
+            
+            let reportHTML = `
+                <div class="report-section">
+                    <div class="report-title">今日打卡总结</div>
+                    <div class="report-content">
+                        <p>您今天共进行了 <strong>${punches.length}</strong> 次${state.settings.punchName}。</p>
+            `;
+            
+            if (punches.length > 1) {
+                let totalInterval = 0;
+                for (let i = 1; i < punches.length; i++) {
+                    const interval = (punches[i].timestamp - punches[i-1].timestamp) / (1000 * 60);
+                    totalInterval += interval;
+                }
+                const avgInterval = totalInterval / (punches.length - 1);
+                
+                reportHTML += `
+                    <p>平均打卡间隔为 <strong>${avgInterval.toFixed(1)}分钟</strong>。</p>
+                `;
+            }
+            
+            reportHTML += `
+                    <p style="margin-top: 10px;">建议：${getSuggestion(punches.length)}</p>
+                </div>
+            `;
+            
+            elements.dailyReport.innerHTML = reportHTML;
+        }
+
+        // 生成可视化报告
+        function generateReports() {
+            generateDailyChart(elements.dailyDatePicker.value);
+            generateHourlyTable(elements.dailyDatePicker.value);
+            generateMonthlyChart();
+            generateYearlyChart();
+        }
+
+        // 生成每日图表
+        function generateDailyChart(selectedDate) {
+            const datePunches = state.punches.filter(punch => punch.date === selectedDate);
+            
+            if (state.charts.daily) {
+                state.charts.daily.destroy();
+            }
+            
+            const ctx = document.getElementById('dailyChart');
+            if (!ctx) return;
+            
+            const canvasCtx = ctx.getContext('2d');
+            
+            if (datePunches.length === 0) {
+                canvasCtx.clearRect(0, 0, ctx.width, ctx.height);
+                canvasCtx.font = '16px Arial';
+                canvasCtx.fillStyle = '#8E8E93';
+                canvasCtx.textAlign = 'center';
+                canvasCtx.fillText('选择日期暂无打卡数据', ctx.width / 2, ctx.height / 2);
+                document.getElementById('dailyStats').innerHTML = '';
+                return;
+            }
+            
+            const hours = Array.from({length: 24}, (_, i) => `${i}:00`);
+            const punchCounts = new Array(24).fill(0);
+            
+            datePunches.forEach(punch => {
+                const date = new Date(punch.timestamp);
+                const hour = date.getHours();
+                punchCounts[hour]++;
+            });
+            
+            state.charts.daily = new Chart(canvasCtx, {
+                type: 'bar',
+                data: {
+                    labels: hours,
+                    datasets: [{
+                        label: '打卡次数',
+                        data: punchCounts,
+                        backgroundColor: 'rgba(0, 122, 255, 0.5)',
+                        borderColor: 'rgba(0, 122, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 更新统计数据
+            const totalPunches = datePunches.length;
+            const peakHour = punchCounts.indexOf(Math.max(...punchCounts));
+            
+            document.getElementById('dailyStats').innerHTML = `
+                <div class="report-stat">
+                    <div class="report-stat-value">${totalPunches}</div>
+                    <div class="report-stat-label">总打卡次数</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value">${peakHour}:00</div>
+                    <div class="report-stat-label">高峰时段</div>
+                </div>
+            `;
+        }
+
+        // 生成每小时打卡详情表格
+        function generateHourlyTable(selectedDate) {
+            const datePunches = state.punches.filter(punch => punch.date === selectedDate);
+            
+            if (!elements.hourlyTableBody) return;
+            
+            if (datePunches.length === 0) {
+                elements.hourlyTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #8E8E93;">选择日期暂无打卡数据</td></tr>';
+                return;
+            }
+            
+            // 按小时分组打卡记录
+            const hourlyData = {};
+            for (let i = 0; i < 24; i++) {
+                hourlyData[i] = {
+                    count: 0,
+                    times: []
+                };
+            }
+            
+            datePunches.forEach(punch => {
+                const date = new Date(punch.timestamp);
+                const hour = date.getHours();
+                hourlyData[hour].count++;
+                hourlyData[hour].times.push(punch.time);
+            });
+            
+            // 生成表格内容
+            let tableHTML = '';
+            for (let hour = 0; hour < 24; hour++) {
+                const data = hourlyData[hour];
+                const hourLabel = `${hour.toString().padStart(2, '0')}:00-${(hour + 1).toString().padStart(2, '0')}:00`;
+                
+                if (data.count > 0) {
+                    const timesString = data.times.join(', ');
+                    tableHTML += `
+                        <tr>
+                            <td>${hourLabel}</td>
+                            <td>${data.count}次</td>
+                            <td>${timesString}</td>
+                        </tr>
+                    `;
+                } else {
+                    tableHTML += `
+                        <tr>
+                            <td>${hourLabel}</td>
+                            <td>0次</td>
+                            <td>-</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            elements.hourlyTableBody.innerHTML = tableHTML;
+        }
+
+        // 生成每月图表
+        function generateMonthlyChart() {
+            const currentMonth = getLocalMonthString();
+            const monthPunches = state.punches.filter(punch => punch.date.startsWith(currentMonth));
+            
+            if (state.charts.monthly) {
+                state.charts.monthly.destroy();
+            }
+            
+            const ctx = document.getElementById('monthlyChart');
+            if (!ctx) return;
+            
+            const canvasCtx = ctx.getContext('2d');
+            
+            if (monthPunches.length === 0) {
+                canvasCtx.clearRect(0, 0, ctx.width, ctx.height);
+                canvasCtx.font = '16px Arial';
+                canvasCtx.fillStyle = '#8E8E93';
+                canvasCtx.textAlign = 'center';
+                canvasCtx.fillText('本月暂无打卡数据', ctx.width / 2, ctx.height / 2);
+                document.getElementById('monthlyStats').innerHTML = '';
+                return;
+            }
+            
+            // 按日期分组
+            const dailyCounts = {};
+            monthPunches.forEach(punch => {
+                const day = punch.date.split('-')[2];
+                dailyCounts[day] = (dailyCounts[day] || 0) + 1;
+            });
+            
+            // 准备数据
+            const days = Array.from({length: 31}, (_, i) => (i + 1).toString());
+            const punchCounts = days.map(day => dailyCounts[day] || 0);
+            
+            state.charts.monthly = new Chart(canvasCtx, {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: '每日打卡次数',
+                        data: punchCounts,
+                        backgroundColor: 'rgba(52, 199, 89, 0.2)',
+                        borderColor: 'rgba(52, 199, 89, 1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 更新统计数据
+            const totalPunches = monthPunches.length;
+            const avgDaily = (totalPunches / Object.keys(dailyCounts).length).toFixed(1);
+            const maxDaily = Math.max(...Object.values(dailyCounts));
+            
+            document.getElementById('monthlyStats').innerHTML = `
+                <div class="report-stat">
+                    <div class="report-stat-value">${totalPunches}</div>
+                    <div class="report-stat-label">本月总打卡</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value">${avgDaily}</div>
+                    <div class="report-stat-label">日均打卡</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value">${maxDaily}</div>
+                    <div class="report-stat-label">单日最高</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value">${Object.keys(dailyCounts).length}</div>
+                    <div class="report-stat-label">打卡天数</div>
+                </div>
+            `;
+        }
+
+        // 生成每年图表
+        function generateYearlyChart() {
+            const currentYear = getLocalYearString();
+            const yearPunches = state.punches.filter(punch => punch.date.startsWith(currentYear));
+            
+            if (state.charts.yearly) {
+                state.charts.yearly.destroy();
+            }
+            
+            const ctx = document.getElementById('yearlyChart');
+            if (!ctx) return;
+            
+            const canvasCtx = ctx.getContext('2d');
+            
+            if (yearPunches.length === 0) {
+                canvasCtx.clearRect(0, 0, ctx.width, ctx.height);
+                canvasCtx.font = '16px Arial';
+                canvasCtx.fillStyle = '#8E8E93';
+                canvasCtx.textAlign = 'center';
+                canvasCtx.fillText('今年暂无打卡数据', ctx.width / 2, ctx.height / 2);
+                document.getElementById('yearlyStats').innerHTML = '';
+                return;
+            }
+            
+            // 按月分组
+            const monthlyCounts = {};
+            yearPunches.forEach(punch => {
+                const month = punch.date.substring(0, 7);
+                monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
+            });
+            
+            // 准备数据
+            const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+            const punchCounts = months.map((_, index) => {
+                const monthKey = `${currentYear}-${String(index + 1).padStart(2, '0')}`;
+                return monthlyCounts[monthKey] || 0;
+            });
+            
+            state.charts.yearly = new Chart(canvasCtx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: '每月打卡次数',
+                        data: punchCounts,
+                        backgroundColor: 'rgba(255, 149, 0, 0.5)',
+                        borderColor: 'rgba(255, 149, 0, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // 更新统计数据
+            const totalPunches = yearPunches.length;
+            const avgMonthly = (totalPunches / Object.keys(monthlyCounts).length).toFixed(1);
+            const maxMonthly = Math.max(...Object.values(monthlyCounts));
+            
+            document.getElementById('yearlyStats').innerHTML = `
+                <div class="report-stat">
+                    <div class="report-stat-value">${totalPunches}</div>
+                    <div class="report-stat-label">今年总打卡</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value">${avgMonthly}</div>
+                    <div class="report-stat-label">月均打卡</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value">${maxMonthly}</div>
+                    <div class="report-stat-label">单月最高</div>
+                </div>
+                <div class="report-stat">
+                    <div class="report-stat-value">${Object.keys(monthlyCounts).length}</div>
+                    <div class="report-stat-label">打卡月数</div>
+                </div>
+            `;
+        }
+
+        // 获取建议
+        function getSuggestion(count) {
+            if (state.settings.punchName === "吸烟") {
+                if (count > 10) return "您今天的吸烟次数较多，建议逐步减少吸烟量，保护健康。";
+                if (count > 5) return "您的吸烟次数适中，可以考虑进一步减少吸烟频率。";
+                return "您的吸烟次数控制得很好，继续保持！";
+            }
+            
+            if (state.settings.punchName === "工作") {
+                if (count > 8) return "您今天工作打卡次数较多，注意劳逸结合，避免过度劳累。";
+                if (count > 4) return "您的工作打卡次数合理，保持良好工作节奏。";
+                return "您今天工作打卡次数较少，请确保完成必要的工作任务。";
+            }
+            
+            return "请根据您的打卡目标调整打卡频率。";
+        }
+
+        // 切换模态框
+        function toggleModal(modal, show) {
+            if (!modal) return;
+            
+            if (show) {
+                if (modal === elements.settingsModal) {
+                    if (elements.punchName) elements.punchName.value = state.settings.punchName;
+                    if (elements.reminderInterval) elements.reminderInterval.value = state.settings.reminderInterval;
+                    if (elements.notificationTitle) elements.notificationTitle.value = state.settings.notificationTitle;
+                }
+                
+                modal.classList.add('active');
+            } else {
+                modal.classList.remove('active');
+            }
+        }
+
+        // 保存设置
+        function saveSettings() {
+            if (elements.punchName) state.settings.punchName = elements.punchName.value || "打卡";
+            if (elements.reminderInterval) state.settings.reminderInterval = parseInt(elements.reminderInterval.value) || 60;
+            if (elements.notificationTitle) state.settings.notificationTitle = elements.notificationTitle.value || "打卡时间到了";
+            
+            saveData();
+            renderUI();
+            setupReminder();
+            toggleModal(elements.settingsModal, false);
+            showNotification("设置已保存");
+        }
+
+        // 设置提醒
+        function setupReminder() {
+            if (state.settings.reminderTimer) {
+                clearInterval(state.settings.reminderTimer);
+            }
+            
+            const intervalMs = state.settings.reminderInterval * 60 * 1000;
+            state.settings.reminderTimer = setInterval(() => {
+                showNotification(state.settings.notificationTitle, "该打卡了！");
+            }, intervalMs);
+        }
+
+        // 显示通知
+        function showNotification(title, message = "") {
+            if (!elements.notificationMessage || !elements.notification) return;
+            
+            elements.notificationMessage.innerHTML = `<strong>${title}</strong><br>${message}`;
+            elements.notification.classList.add('active');
+            
+            setTimeout(() => {
+                elements.notification.classList.remove('active');
+            }, 3000);
+            
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    new Notification(title, { body: message });
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification(title, { body: message });
+                        }
+                    });
+                }
+            }
+        }
+
+        // 在DOM完全加载后初始化应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
