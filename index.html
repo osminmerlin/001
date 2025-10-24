@@ -594,6 +594,7 @@
         };
 
         let elements;
+        let intervalTimer;
 
         function getLocalDateString(date = new Date()) {
             const year = date.getFullYear();
@@ -610,6 +611,24 @@
 
         function getLocalYearString(date = new Date()) {
             return date.getFullYear().toString();
+        }
+
+        // 格式化时间间隔为X时X分X秒格式
+        function formatTimeInterval(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = (seconds % 60).toFixed(2);
+            
+            let result = '';
+            if (hours > 0) {
+                result += `${hours}时`;
+            }
+            if (minutes > 0 || hours > 0) {
+                result += `${minutes}分`;
+            }
+            result += `${remainingSeconds}秒`;
+            
+            return result;
         }
 
         function initApp() {
@@ -648,6 +667,33 @@
             setupEventListeners();
             // 设置日期选择器默认值为今天
             if (elements.dailyDatePicker) elements.dailyDatePicker.value = getLocalDateString();
+            
+            // 启动实时更新计时器
+            if (intervalTimer) clearInterval(intervalTimer);
+            intervalTimer = setInterval(updateRealTimeInfo, 1000);
+        }
+
+        function updateRealTimeInfo() {
+            const today = getLocalDateString();
+            const todayPunches = state.punches.filter(punch => punch.date === today);
+            
+            // 只更新平均间隔预测部分
+            if (elements.avgAfterPunch && todayPunches.length > 0) {
+                const now = new Date();
+                let newIntervals = [];
+                for (let i = 1; i < todayPunches.length; i++) {
+                    newIntervals.push((todayPunches[i].timestamp - todayPunches[i - 1].timestamp) / 1000);
+                }
+                if (todayPunches.length >= 1) {
+                    const lastPunch = todayPunches[todayPunches.length - 1];
+                    const newInterval = (now.getTime() - lastPunch.timestamp) / 1000;
+                    newIntervals.push(newInterval);
+                    let avgAfterInSeconds = newIntervals.reduce((a, b) => a + b, 0) / newIntervals.length;
+                    
+                    const formattedTime = formatTimeInterval(avgAfterInSeconds);
+                    elements.avgAfterPunch.textContent = `现在打卡后平均间隔将变为 ${formattedTime}`;
+                }
+            }
         }
 
         function loadData() {
@@ -665,7 +711,6 @@
         function setupEventListeners() {
             if (elements.punchBtn) elements.punchBtn.addEventListener('click', handlePunch);
             if (elements.settingsBtn) elements.settingsBtn.addEventListener('click', () => {
-                // 加载当前设置到表单
                 if (elements.appTitleInput) elements.appTitleInput.value = state.settings.appTitle;
                 if (elements.todayCardTitleInput) elements.todayCardTitleInput.value = state.settings.todayCardTitle;
                 if (elements.punchName) elements.punchName.value = state.settings.punchName;
@@ -739,7 +784,7 @@
             }
             if (elements.avgInterval) elements.avgInterval.textContent = avgIntervalValue;
 
-            // 预测下次打卡后的平均间隔
+            // 预测下次打卡后的平均间隔（实时计算）
             if (elements.avgAfterPunch) {
                 if (todayPunches.length === 0) {
                     elements.avgAfterPunch.textContent = "现在打卡后平均间隔将无法计算";
@@ -748,15 +793,18 @@
                     const now = new Date();
                     let newIntervals = [];
                     for (let i = 1; i < todayPunches.length; i++) {
-                        newIntervals.push((todayPunches[i].timestamp - todayPunches[i - 1].timestamp) / (1000 * 60));
+                        newIntervals.push((todayPunches[i].timestamp - todayPunches[i - 1].timestamp) / 1000);
                     }
                     if (todayPunches.length >= 1) {
-                        // 新间隔为 当前时间 - 最后一次打卡时间
+                        // 新间隔为 当前时间 - 最后一次打卡时间（秒）
                         const lastPunch = todayPunches[todayPunches.length - 1];
-                        const newInterval = (now.getTime() - lastPunch.timestamp) / (1000 * 60);
+                        const newInterval = (now.getTime() - lastPunch.timestamp) / 1000;
                         newIntervals.push(newInterval);
-                        let avgAfter = newIntervals.reduce((a, b) => a + b, 0) / newIntervals.length;
-                        elements.avgAfterPunch.textContent = `现在打卡后平均间隔将变为 ${avgAfter.toFixed(1)}分钟`;
+                        let avgAfterInSeconds = newIntervals.reduce((a, b) => a + b, 0) / newIntervals.length;
+                        
+                        // 格式化显示时间
+                        const formattedTime = formatTimeInterval(avgAfterInSeconds);
+                        elements.avgAfterPunch.textContent = `现在打卡后平均间隔将变为 ${formattedTime}`;
                     }
                 }
             }
@@ -927,7 +975,7 @@
             } else if (todayPunches.length <= 6) {
                 encouragementHTML = `<p>不错！已经意识到需要控制，明天争取进一步减少次数。</p>`;
             } else if (todayPunches.length <= 10) {
-                encouragementHTML = `<p>戒烟是个过程，不要气馁。明天设定一个小目标，减少1-2次。</p>`;
+                encouragementHTML = `<p>戒烟是个过程，不要气馁馁。明天设定一个小目标，减少1-2次。</p>`;
             } else {
                 encouragementHTML = `<p>今天可能有些挑战，但重要的是您正在记录和面对。明天会更好！</p>`;
             }
