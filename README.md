@@ -102,3 +102,113 @@ Edge 79+
 智能提醒系统
 
 ​开始使用​：直接打开HTML文件即可开始记录您的打卡行为！
+Punch Card Assistant - User Guide
+
+Project Introduction
+
+Punch Card Assistant is a lightweight web-based punch record application that supports custom punch types, data statistics analysis, and visual reporting features. Users can easily record punch behaviors with simple clicks and view detailed statistics and trend analysis.
+
+Features
+
+Core Functions
+
+• Punch Recording: One-click punch recording with support for custom punch types
+
+• Real-time Statistics: Display today's punch count and average interval time
+
+• History Records: View recent punch records in reverse chronological order
+
+• Smart Reminders: Set reminder intervals for timed punch notifications
+
+Data Analysis
+
+• Daily Reports: Automatically generate daily punch summaries and suggestions
+
+• Visual Charts: Support daily, monthly, and yearly punch trend analysis
+
+• Detailed Statistics: Includes total punch count, peak hours, average punch frequency, etc.
+
+• Hourly Analysis: View detailed hourly punch data and specific times
+
+Customization Options
+
+• Custom Punch Names: Such as "Smoking Punch", "Work Punch", etc.
+
+• Adjustable Reminder Intervals: 5-240 minutes configurable reminder frequency
+
+• Personalized Notifications: Custom reminder titles and content
+
+Usage Guide
+
+Basic Operations
+
+1. Open the application and click the "Punch" button to record current time
+2. Check the "Today's Punches" area for today's statistics
+3. View detailed punch history in the "Recent Punch Records" section
+
+Settings
+
+1. Click the "⚙️" button in the top right corner to access settings
+2. Modify punch name, reminder interval, and notification title
+3. Click "Save Settings" to apply changes
+
+Reports Viewing
+
+1. Click the "📊" button in the top right corner to access reports
+2. Switch between "Daily", "Monthly", "Yearly" tabs for different time dimensions
+3. Select specific dates in daily reports to view historical data
+4. Check charts and statistics to understand punch trends
+
+Technical Features
+
+• Pure Frontend Implementation: Based on HTML5, CSS3, and JavaScript, no backend required
+
+• Responsive Design: Adapted for mobile devices and desktop browsers
+
+• Local Storage: Uses localStorage to save data, protecting user privacy
+
+• Modern UI: iOS-style design with clean and beautiful interface
+
+Browser Compatibility
+
+Supports all modern browsers including:
+• Chrome 60+
+
+• Firefox 55+
+
+• Safari 12+
+
+• Edge 79+
+
+Data Storage
+
+All punch records and settings are saved in browser local storage and are not uploaded to any servers, ensuring data security.
+
+Custom Suggestions
+
+Based on different punch types, the application provides personalized suggestions:
+• Smoking Punch: Provides health suggestions based on frequency
+
+• Work Punch: Reminds to balance work and rest
+
+• Other Types: General punch frequency suggestions
+
+Important Notes
+
+1. Clearing browser data will delete all punch records
+2. Data is not synchronized between different devices
+3. First-time use requires notification permission authorization for optimal experience
+
+Changelog
+
+Current Version Features
+
+• Basic punch functionality
+
+• Data statistics and visualization
+
+• Personalization settings
+
+• Smart reminder system
+
+Get Started: Open the HTML file directly to start recording your punch behaviors!
